@@ -3,7 +3,7 @@ package com.example.miniact6;
 import android.app.Activity;
 import android.os.Bundle;
 import android.os.Handler;
-import android.os.Message;
+import android.os.StrictMode;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -19,7 +19,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
-public class SimpleSocket extends Activity implements View.OnClickListener {
+public class SimpleSocketRunnable extends Activity implements View.OnClickListener {
 
     private static final String CLASSTAG = SimpleSocket.class.getSimpleName();
 
@@ -28,6 +28,7 @@ public class SimpleSocket extends Activity implements View.OnClickListener {
     private EditText socketInput;
     private TextView socketOutput;
     Handler h;
+
     //private static final String SERVER_IP = "10.0.2.2";
 
     @Override
@@ -43,17 +44,7 @@ public class SimpleSocket extends Activity implements View.OnClickListener {
         this.socketOutput = findViewById(R.id.socket_output);
         socketButton = findViewById(R.id.socket_button);
 
-        this.h = new Handler(){
-            @Override
-            public void handleMessage(Message msg){
-                switch(msg.what){
-                    case 0:
-                        socketOutput.setText((String) msg.obj);
-                        break;
-                }
-                super.handleMessage(msg);
-            }
-        };
+        this.h = new Handler();
 
         socketButton.setOnClickListener(this);
     }
@@ -66,10 +57,7 @@ public class SimpleSocket extends Activity implements View.OnClickListener {
                 try{
                     InetAddress serverAddr = InetAddress.getByName(ipAddress.getText().toString());
                     String output = callSocket(serverAddr, port.getText().toString(), socketInput.getText().toString());
-                    Message lmsg = new Message();
-                    lmsg.obj = output;
-                    lmsg.what = 0;
-                    SimpleSocket.this.h.sendMessage(lmsg);
+                    SimpleSocketRunnable.this.h.post(new changeTextThread(output));
                 } catch (UnknownHostException e) {
                     e.printStackTrace();
                 }
@@ -94,23 +82,34 @@ public class SimpleSocket extends Activity implements View.OnClickListener {
             writer.flush();
 
             output = reader.readLine();
-            Log.d("NetworkExplorer".toString()," " + SimpleSocket.CLASSTAG + " output - " + output);
+            Log.d("NetworkExplorer".toString()," " + SimpleSocketRunnable.CLASSTAG + " output - " + output);
 
             writer.write("EXIT\n", 0, 5);
             writer.flush();
         } catch(IOException e){
-            Log.d("NetworkExplorer".toString()," " + SimpleSocket.CLASSTAG + " IOException calling socket", e);
+            Log.d("NetworkExplorer".toString()," " + SimpleSocketRunnable.CLASSTAG + " IOException calling socket", e);
         } finally {
             try{
                 if(writer!=null) writer.close();
-            } catch (IOException e){}
+            } catch (IOException e){e.printStackTrace();}
             try{
                 if(writer!=null) reader.close();
-            } catch (IOException e){}
+            } catch (IOException e){e.printStackTrace();}
             try{
                 if(writer!=null) socket.close();
-            } catch (IOException e){}
+            } catch (IOException e){e.printStackTrace();}
         }
         return output;
+    }
+
+    class changeTextThread implements Runnable{
+        private String output;
+
+        public changeTextThread(String str){this.output = str;}
+
+        @Override
+        public void run(){
+            socketOutput.setText(output);
+        }
     }
 }
