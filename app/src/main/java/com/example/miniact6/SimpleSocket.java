@@ -64,8 +64,9 @@ public class SimpleSocket extends Activity implements View.OnClickListener {
         final Thread tr = new Thread(){
             public void run(){
                 try{
-                    InetAddress serverAddr = InetAddress.getByName(ipAddress.getText().toString());
-                    String output = callSocket(serverAddr, port.getText().toString(), socketInput.getText().toString());
+                    //InetAddress serverAddr = InetAddress.getByName(ipAddress.getText().toString());
+                    InetAddress serverAddr = InetAddress.getByName(InetAddress.getLocalHost().toString());
+                            String output = callSocket(serverAddr, port.getText().toString(), socketInput.getText().toString());
                     Message lmsg = new Message();
                     lmsg.obj = output;
                     lmsg.what = 0;
